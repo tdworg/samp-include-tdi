@@ -104,7 +104,7 @@ enum e_TDW_TDI_TEXTDRAW_FLAGS (<<= 1) {
 		#define _ALS_TextDrawCreate
 	#endif
 	#define TextDrawCreate CST_TextDrawCreate
-	
+
 	native CST_TextDrawSetString(Text:text,
 		const string[]) = TextDrawSetString;
 	#if defined _ALS_TextDrawSetString
@@ -113,7 +113,7 @@ enum e_TDW_TDI_TEXTDRAW_FLAGS (<<= 1) {
 		#define _ALS_TextDrawSetString
 	#endif
 	#define TextDrawSetString CST_TextDrawSetString
-	
+
 	// Player textdraws
 	native PlayerText:CST_CreatePlayerTextDraw(playerid, Float:x, Float:y,
 		const text[]) = CreatePlayerTextDraw;
@@ -123,7 +123,7 @@ enum e_TDW_TDI_TEXTDRAW_FLAGS (<<= 1) {
 		#define _ALS_CreatePlayerTextDraw
 	#endif
 	#define CreatePlayerTextDraw CST_CreatePlayerTextDraw
-	
+
 	native CST_PlayerTextDrawSetString(playerid, PlayerText:text,
 		const string[]) = PlayerTextDrawSetString;
 	#if defined _ALS_PlayerTextDrawSetString
@@ -220,8 +220,6 @@ stock TextDraw:tiCreateBox(Float:x, Float:y, Float:width, Float:height,
 		TDI_SET_PLAYER_ID(handle, TDI_TEXTDRAW_ID_MAX);
 		TDI_SET_TEXTDRAW_ID(handle, td);
 	} else {
-		// new Float:aspect = GetPlayerCameraAspectRatio(playerid) ;
-		// printf("aspect : %f", aspect);
 		// Create a new textdraw for a player.
 		new
 			PlayerText:td = CreatePlayerTextDraw(playerid,
@@ -231,7 +229,7 @@ stock TextDraw:tiCreateBox(Float:x, Float:y, Float:width, Float:height,
 		PlayerTextDrawFont(playerid, td, 2);
 		PlayerTextDrawBoxColor(playerid, td, boxcolor);
 		PlayerTextDrawLetterSize(playerid, td, 0.0, (height) * 0.135);
-		PlayerTextDrawTextSize(playerid, td, x + width - 2.5, 0.0);
+		PlayerTextDrawTextSize(playerid, td, x + width, 0.0);
 		PlayerTextDrawSetProportional(playerid, td, 1);
 		PlayerTextDrawSetOutline(playerid, td, 0);
 		PlayerTextDrawSetShadow(playerid, td, 0);
@@ -403,8 +401,6 @@ stock tiSetModelPreviewRots(TextDraw:handle, Float:rx, Float:ry, Float:rz, Float
 	}
 }
 
-// Sets a shadow, outline options.
-
 // ----------------------------------------------------------------------------
 // INTERNAL FUNCTIONS
 
@@ -415,7 +411,7 @@ stock tiSetModelPreviewRots(TextDraw:handle, Float:rx, Float:ry, Float:rz, Float
 static stock const  // font 1
 	Float:TDW_gscLetterSizes[] =
 {
-    15.0,   9.0,  17.0,  27.0,  20.0,  34.0,  23.0,  12.0,  //   ! " –à $ % & '
+    15.0,   9.0,  17.0,  27.0,  20.0,  34.0,  23.0,  12.0,  //   ! " £ $ % & '
     12.0,  12.0,  21.0,  20.0,  12.0,  14.0,  12.0,  15.0,  // ( ) * + , - . /
     23.0,  15.0,  21.0,  21.0,  21.0,  21.0,  21.0,  21.0,  // 0 1 2 3 4 5 6 7
     20.0,  21.0,  12.0,  12.0,  24.0,  24.0,  24.0,  19.0,  // 8 9 : ; < = > ?
@@ -427,20 +423,20 @@ static stock const  // font 1
     19.0,   9.0,   9.0,  19.0,   9.0,  29.0,  19.0,  21.0,  // h i j k l m n o
     19.0,  19.0,  15.0,  15.0,  14.0,  18.0,  19.0,  27.0,  // p q r s t u v w
     20.0,  20.0,  17.0,  21.0,  17.0,  20.0,  15.0,  15.0,  // x y z     $ [ ]
-    22.0,  22.0,  22.0,  22.0,  29.0,  19.0,  16.0,  16.0,  // –ê –ë –í –ì –ñ –ó –ò –ô
-    16.0,  16.0,  11.0,  11.0,  11.0,  11.0,  27.0,  27.0,  // –ö –õ –ú –ù –û –ü –¢ –£
-    27.0,  27.0,  23.0,  23.0,  23.0,  23.0,  20.0,  19.0,  // –§ –¶ –© –™ –´ –¨ –Ø –∞
-    19.0,  19.0,  19.0,  30.0,  14.0,  19.0,  19.0,  19.0,  // –± –≤ –≥ –∂ –∑ –∏ –π –∫
-    19.0,   9.0,   9.0,   9.0,   9.0,  21.0,  21.0,  21.0,  // –ª –º –Ω –æ –ø —Ç —É —Ñ
-    21.0,  18.0,  18.0,  18.0,  18.0,  24.0,  19.0,  19.0,  // —Ü —â —ä —ã —å –° —Å —ó
+    22.0,  22.0,  22.0,  22.0,  29.0,  19.0,  16.0,  16.0,  // ¿ ¡ ¬ √ ∆ « » …
+    16.0,  16.0,  11.0,  11.0,  11.0,  11.0,  27.0,  27.0,  //   À Ã Õ Œ œ “ ”
+    27.0,  27.0,  23.0,  23.0,  23.0,  23.0,  20.0,  19.0,  // ‘ ÷ Ÿ ⁄ € ‹ ﬂ ‡
+    19.0,  19.0,  19.0,  30.0,  14.0,  19.0,  19.0,  19.0,  // · ‚ „ Ê Á Ë È Í
+    19.0,   9.0,   9.0,   9.0,   9.0,  21.0,  21.0,  21.0,  // Î Ï Ì Ó Ô Ú Û Ù
+    21.0,  18.0,  18.0,  18.0,  18.0,  24.0,  19.0,  19.0,  // ˆ ˘ ˙ ˚ ¸ — Ò ø
     20.0,  18.0,  19.0,  19.0,  21.0,  19.0,  19.0,  19.0,  // 0 1 2 3 4 5 6 7
     19.0,  19.0,  16.0,  19.0,  19.0,  19.0,  20.0,  19.0,  // 8 9 : A B C D E
     16.0,  19.0,  19.0,   9.0,  19.0,  20.0,  14.0,  29.0,  // F G H I J K L M
     19.0,  19.0,  19.0,  19.0,  19.0,  19.0,  21.0,  19.0,  // N O P Q R S T U
-    20.0,  32.0,  21.0,  19.0,  19.0,  19.0,  19.0,  19.0,  // V W X Y Z –ê –ë –í
-    19.0,  29.0,  19.0,  19.0,  19.0,  19.0,  19.0,   9.0,  // –ì –ñ –ó –ò –ô –ö –õ –ú
-     9.0,   9.0,   9.0,  19.0,  19.0,  19.0,  19.0,  19.0,  // –ù –û –ü –¢ –£ –§ –¶ –©
-    19.0,  19.0,  19.0,  19.0,  21.0,  19.0,  10.0,   9.0   // –™ –´ –¨ –Ø –° —ó ' .
+    20.0,  32.0,  21.0,  19.0,  19.0,  19.0,  19.0,  19.0,  // V W X Y Z ¿ ¡ ¬
+    19.0,  29.0,  19.0,  19.0,  19.0,  19.0,  19.0,   9.0,  // √ ∆ « » …   À Ã
+     9.0,   9.0,   9.0,  19.0,  19.0,  19.0,  19.0,  19.0,  // Õ Œ œ “ ” ‘ ÷ Ÿ
+    19.0,  19.0,  19.0,  19.0,  21.0,  19.0,  10.0,   9.0   // ⁄ € ‹ ﬂ — ø ' .
 };
 
 
