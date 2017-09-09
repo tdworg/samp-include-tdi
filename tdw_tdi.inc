@@ -351,37 +351,37 @@ stock bool:tiChangePreviewModel(Textdraw:handle, modelindex)
 	return true;
 }
 
-stock bool:tiChangeText(Textdraw:handle, const text[])
+stock tiChangeText(Textdraw:handle, const text[])
 {
 	if (TDI_GET_TEXTDRAW_TYPE(handle) != TDI_TYPE_TEXT)
-		return false;
+		return 0;
 	new
 		playerid = TDI_GET_PLAYER_ID(handle),
-		td = TDI_GET_TEXTDRAW_ID(handle);
+		td = TDI_GET_TEXTDRAW_ID(handle),
+		ret;
 	if (playerid == TDI_INVALID_PLAYER_ID) {
-		TextDrawSetString(Text:td, text);
+		ret = TextDrawSetString(Text:td, text);
 	} else {
-		PlayerTextDrawSetString(playerid, PlayerText:td, text);
+		ret = PlayerTextDrawSetString(playerid, PlayerText:td, text);
 	}
-	return true;
+	return ret;
 }
 
-stock bool:tiChangeColor(Textdraw:handle, color)
+stock tiChangeColor(Textdraw:handle, color)
 {
 	new
 		playerid = TDI_GET_PLAYER_ID(handle),
-		td = TDI_GET_TEXTDRAW_ID(handle);
+		td = TDI_GET_TEXTDRAW_ID(handle),
+		ret;
 	if (playerid == TDI_INVALID_PLAYER_ID) {
-		TextDrawColor(Text:td, color);
+		ret = TextDrawColor(Text:td, color);
 	} else {
-		PlayerTextDrawColor(playerid, PlayerText:td, color);
+		ret = PlayerTextDrawColor(playerid, PlayerText:td, color);
 	}
-	return true;
+	return ret;
 }
 
-// Useful functions
-
-stock bool:tiEqualId(Textdraw:handle, {PlayerText, Text}:id, tag = tagof(id))
+stock bool:tiIsEqualId(Textdraw:handle, {PlayerText, Text}:id, tag = tagof(id))
 {
 	static
 		playerid,

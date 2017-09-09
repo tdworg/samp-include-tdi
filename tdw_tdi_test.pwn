@@ -46,7 +46,7 @@ public OnFilterScriptExit()
 
 public OnPlayerClickTextDraw(playerid, Text:clickedid)
 {
-	if (tiEqualId(sprite, clickedid)) {
+	if (tiIsEqualId(sprite, clickedid)) {
 		printf("Clicked!");
 	}
 	return 1;
