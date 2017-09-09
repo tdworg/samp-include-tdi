@@ -49,6 +49,7 @@
 	| (((%3) & 0xff) <<  8)\
 	| (((%4) & 0xff)      ))
 
+// Default colors
 #define TDI_DEFAULT_COLOR     TDI_RGBA(225, 225, 225, 255)
 #define TDI_DEFAULT_BCOLOR    TDI_RGBA( 80,  80,  80,  80)
 #define TDI_TRANSPARENT_COLOR TDI_RGBA(  0,   0,   0,   0)
@@ -59,7 +60,13 @@
 #define TDI_DEFAULT_MAX_SHADOW_SIZE  (2)
 #define TDI_DEFAULT_MAX_OUTLINE_SIZE (0)
 
-// 0000 0000 0000 0000 0000 0000 0000 0000
+// A     |B |C            |D
+// 000000 00 000 0000 0000 0000 0000 0000
+//
+// A - Textdraw Id
+// B - Player Id
+// C - Type Id
+// D - Flags
 
 #define TDI_TAG(%1) (_:(%1))
 #define TDI_SET(%1,%2) (TDI_TAG(%1) |= TDI_TAG(%2))
