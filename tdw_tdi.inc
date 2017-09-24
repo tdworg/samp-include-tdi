@@ -1,404 +1,889 @@
-/** ======================================================================== **\
-	TDW Textdraw Improvements
+/*
+ * TDW Textdraw Improvments
+ *
+ * Copyright (c) 2017 Double V
+ *
+ * This software is provided 'as-is', without any express or implied
+ * warranty. In no event will the authors be held liable for any damages
+ * arising from the use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose,
+ * including commercial applications, and to alter it and redistribute it
+ * freely, subject to the following restrictions:
+ *
+ * 1. The origin of this software must not be misrepresented; you must not
+ * claim that you wrote the original software. If you use this software
+ * in a product, an acknowledgement in the product documentation would be
+ * appreciated but is not required.
+ * 2. Altered source versions must be plainly marked as such, and must not be
+ * misrepresented as being the original software.
+ * 3. This notice may not be removed or altered from any source distribution.
+ */
 
-| Version:
-	1.1.0
-
-| License:
-	Copyright (c) 2017 Double V
-
-	This software is provided 'as-is', without any express or implied
-	warranty. In no event will the authors be held liable for any damages
-	arising from the use of this software.
-
-	Permission is granted to anyone to use this software for any purpose,
-	including commercial applications, and to alter it and redistribute it
-	freely, subject to the following restrictions:
-
-	1.	The origin of this software must not be misrepresented; you must not
-		claim that you wrote the original software. If you use this software
-		in a product, an acknowledgement in the product documentation would be
-		appreciated but is not required.
-	2.	Altered source versions must be plainly marked as such, and must not be
-		misrepresented as being the original software.
-	3.	This notice may not be removed or altered from any source distribution.
-\** ======================================================================== **/
-
-#if defined _TDW_TDI_INC
+#if defined _TDW_TDI_INC_
 	#endinput
 #endif
-#define _TDW_TDI_INC
+#define _TDW_TDI_INC_
 
-#define TDI_FONT_CLAMP(%1)     clamp((%1), TDI_FONT_0, TDI_FONT_3)
-
-#define TDI_FONT_0             (0)
-#define TDI_FONT_1             (1)
-#define TDI_FONT_2             (2)
-#define TDI_FONT_3             (3)
-#define TDI_FONT_SPRITE_DRAW   (4)
-#define TDI_FONT_MODEL_PREVIEW (5)
-
-#define TDI_TYPE_TEXT          (0)
-#define TDI_TYPE_BOX           (1)
-#define TDI_TYPE_SPRITE_DRAW   (2)
-#define TDI_TYPE_MODEL_PREVIEW (3)
-
-#define TDI_RGBA(%1,%2,%3,%4) (\
-	  (((%1) & 0xff) << 24)\
-	| (((%2) & 0xff) << 16)\
-	| (((%3) & 0xff) <<  8)\
-	| (((%4) & 0xff)      ))
-
-// Default colors
-#define TDI_DEFAULT_COLOR     TDI_RGBA(225, 225, 225, 255)
-#define TDI_DEFAULT_BCOLOR    TDI_RGBA( 80,  80,  80,  80)
-#define TDI_TRANSPARENT_COLOR TDI_RGBA(  0,   0,   0,   0)
-
-// Default SA:MP values
-#define TDI_DEFAULT_LETTER_WIDTH     (0.48)
-#define TDI_DEFAULT_LETTER_HEIGHT    (1.12)
-#define TDI_DEFAULT_MAX_SHADOW_SIZE  (2)
-#define TDI_DEFAULT_MAX_OUTLINE_SIZE (0)
-
-// A     |B |C            |D
-// 000000 00 000 0000 0000 0000 0000 0000
-//
-// A - Textdraw Id
-// B - Player Id
-// C - Type Id
-// D - Flags
-
-#define TDI_TAG(%1) (_:(%1))
-#define TDI_SET(%1,%2) (TDI_TAG(%1) |= TDI_TAG(%2))
-#define TDI_GET(%1,%2,%3) ((TDI_TAG((%1)) & ((%2) << (%3))) >>> (%3))
-
-#define TDI_GET_TEXTDRAW_ID(%1)\
-	(TDI_TAG((%1)) & TDI_TEXTDRAW_ID_MASK)
-#define TDI_GET_PLAYER_ID(%1)\
-	TDI_GET((%1), TDI_PLAYER_ID_MASK, TDI_PLAYER_ID_OFFSET)
-#define TDI_GET_TEXTDRAW_TYPE(%1)\
-	TDI_GET((%1), TDI_TEXTDRAW_TYPE_MASK, TDI_TEXTDRAW_TYPE_OFFSET)
-#define TDI_GET_TEXTDRAW_FLAGS(%1)\
-	TDI_GET((%1), TDI_TEXTDRAW_FLAGS_MASK, TDI_TEXTDRAW_FLAGS_OFFSET)
-
-#define TDI_SET_TEXTDRAW_ID(%1,%2)\
-	(TDI_SET((%1),\
-		(TDI_TAG(%2) & TDI_TEXTDRAW_ID_MASK)))
-#define TDI_SET_PLAYER_ID(%1,%2)\
-	(TDI_SET((%1),\
-		(TDI_TAG(%2) & TDI_PLAYER_ID_MASK) << TDI_PLAYER_ID_OFFSET))
-#define TDI_SET_TEXTDRAW_TYPE(%1,%2)\
-	(TDI_SET((%1),\
-		(TDI_TAG(%2) & TDI_TEXTDRAW_TYPE_MASK) << TDI_TEXTDRAW_TYPE_OFFSET))
-#define TDI_SET_TEXTDRAW_FLAGS(%1,%2)\
-	(TDI_SET((%1),\
-		(TDI_TAG(%2) & TDI_TEXTDRAW_FLAGS_MASK) << TDI_TEXTDRAW_FLAGS_OFFSET))
-
-#define TDI_TEXTDRAW_ID_MASK      (0xfff)  // max - 4096
-#define TDI_PLAYER_ID_MASK        (0x7ff)  // max - 2048
-#define TDI_TEXTDRAW_TYPE_MASK    (0x3)    // max - 3
-#define TDI_TEXTDRAW_FLAGS_MASK   (0x3f)   // max - 63 (6 flags available)
-
-#define TDI_PLAYER_ID_OFFSET      (12)
-#define TDI_TEXTDRAW_TYPE_OFFSET  (23)
-#define TDI_TEXTDRAW_FLAGS_OFFSET (25)
-
-#define TDI_INVALID_TEXTDRAW_ID   TDI_TEXTDRAW_ID_MASK
-#define TDI_INVALID_PLAYER_ID     TDI_PLAYER_ID_MASK
-
-// Flags
-#define TDI_TEXTDRAW_FLAG_USE_BOX (1 << 1)
-
+/*
+ * SA:MP fixes
+ *
+ * Some SA:MP natives don't use `const` qualifier when they could. We need
+ * to redefine them to fix the problem.
+ *
+ * These declarations are used if the `SA:MP fixes` library is not
+ * included before.
+ */
 #if !defined _INC_SAMP_Community_fixes && !defined FIX_const
-	native Text:CST_TextDrawCreate(Float:x, Float:y,
+
+	/*
+	 * Global textdraws
+	 */
+
+	native Text:TDW_TDI_TextDrawCreate(Float:x, Float:y,
 		const text[]) = TextDrawCreate;
+	native TDW_TDI_TextDrawSetString(Text:text,
+		const string[]) = TextDrawSetString;
+
 	#if defined _ALS_TextDrawCreate
 		#undef TextDrawCreate
 	#else
 		#define _ALS_TextDrawCreate
 	#endif
-	#define TextDrawCreate CST_TextDrawCreate
+	#define TextDrawCreate TDW_TDI_TextDrawCreate
 
-	native CST_TextDrawSetString(Text:text,
-		const string[]) = TextDrawSetString;
 	#if defined _ALS_TextDrawSetString
 		#undef TextDrawSetString
 	#else
 		#define _ALS_TextDrawSetString
 	#endif
-	#define TextDrawSetString CST_TextDrawSetString
+	#define TextDrawSetString TDW_TDI_TextDrawSetString
 
-	native PlayerText:CST_CreatePlayerTextDraw(playerid, Float:x, Float:y,
+	/*
+	 * Player textdraws
+	 */
+
+	native PlayerText:TDW_TDI_CreatePlayerTextDraw(playerid, Float:x, Float:y,
 		const text[]) = CreatePlayerTextDraw;
+	native TDW_TDI_PlayerTextDrawSetString(playerid, PlayerText:text,
+		const string[]) = PlayerTextDrawSetString;
+
 	#if defined _ALS_CreatePlayerTextDraw
 		#undef CreatePlayerTextDraw
 	#else
 		#define _ALS_CreatePlayerTextDraw
 	#endif
-	#define CreatePlayerTextDraw CST_CreatePlayerTextDraw
+	#define CreatePlayerTextDraw TDW_TDI_CreatePlayerTextDraw
 
-	native CST_PlayerTextDrawSetString(playerid, PlayerText:text,
-		const string[]) = PlayerTextDrawSetString;
 	#if defined _ALS_PlayerTextDrawSetString
 		#undef PlayerTextDrawSetString
 	#else
 		#define _ALS_PlayerTextDrawSetString
 	#endif
-	#define PlayerTextDrawSetString CST_PlayerTextDrawSetString
+	#define PlayerTextDrawSetString TDW_TDI_PlayerTextDrawSetString
 #endif
 
+/*
+ * Useful macros
+ */
+
+/* Converts RGBA to HEX */
+#define TDW_TDI_RGBA(%1,%2,%3,%4)\
+	((((%1) & 0xFF) << 24) | (((%2) & 0xFF) << 16) | (((%3) & 0xFF) << 8) |\
+		(((%4) & 0xFF)))
+
+/* Returns only a valid font */
+#define TDW_TDI_TEXTFONT_CLAMP(%1) clamp((%1), TDW_TDI_FONT_0, TDW_TDI_FONT_3)
+
+/* Returns a mask. */
+#define TDW_TDI_SHIFT_BITS(%1,%2) (_:(%1) << _:(%2))
+
+/* Returns true when the passed array is packed, otherwise returns false. */
+#define TDW_TDI_IS_PACKED_STRING(%1) (%1{0} != 0)
+
+/* Returns true if the passed slot is used, otherwise returns false.  */
+#define TDW_TDI_IS_USED_TEXTDRAW(%1) (TDW_TDI_IS_VALID_TEXTDRAW(%1) &&\
+	TDW_gsData[_:(%1)][EI_TDW_TDI_DATA_BITS])
+
+/* Returns true if the passed id is valid, otherwise returns false. */
+#define TDW_TDI_IS_VALID_TEXTDRAW(%1) (0 <= _:(%1) < sizeof TDW_gsData)
+
+/* Returns true if the passed id is valid for all player textdraws,
+ * otherwise returns false.
+ */
+#define TDW_TDI_IS_PLAYER_TEXTDRAW(%1) (_:(%1) > TDW_TDI_MAX_TEXTDRAWS)
+
+/* Returns the player's id, otherwise returns INVALID_PLAYER_ID. */
+#define TDW_TDI_GET_PLAYER_ID(%1) (TDW_TDI_IS_PLAYER_TEXTDRAW(%1) ?\
+ 	((_:(%1) - TDW_TDI_MAX_TEXTDRAWS) / TDW_TDI_MAX_PLAYER_TEXTDRAWS) :\
+ 	INVALID_PLAYER_ID)
+
+/*
+ * Internal constants
+ */
+
+/* Fonts */
+#define TDW_TDI_FONT_0             (0)
+#define TDW_TDI_FONT_1             (1)
+#define TDW_TDI_FONT_2             (2)
+#define TDW_TDI_FONT_3             (3)
+#define TDW_TDI_FONT_SPRITE_DRAW   (4)
+#define TDW_TDI_FONT_PREVIEW_MODEL (5)
+
+/* Align */
+#define TDW_TDI_ALIGN_LEFT   (1)
+#define TDW_TDI_ALIGN_CENTER (2)
+#define TDW_TDI_ALIGN_RIGHT  (3)
+
+/* Default values */
+#define TDW_TDI_DEFAULT_FONT         (TDW_TDI_FONT_1)
+#define TDW_TDI_DEFAULT_LWIDTH       (0.48)
+#define TDW_TDI_DEFAULT_LHEIGHT      (1.12)
+#define TDW_TDI_DEFAULT_OUTLINE_SIZE (0)
+#define TDW_TDI_DEFAULT_SHADOW_SIZE  (2)
+#define TDW_TDI_DEFAULT_COLOR        TDW_TDI_RGBA(255, 255, 255, 255)
+#define TDW_TDI_DEFAULT_BCOLOR       TDW_TDI_RGBA( 80,  80,  80,  80)
+
+/* Offsets for reading/writing the data in a cell */
+#define TDW_TDI_BOF_SHADOW  (0)
+#define TDW_TDI_BOF_OUTLINE (8)
+#define TDW_TDI_BOF_ALIGN   (16)
+#define TDW_TDI_BOF_FONT    (20)
+#define TDW_TDI_BOF_BOX     (24)
+#define TDW_TDI_BOF_TYPE    (25)
+
+/* Textdraw types */
+#define TDW_TDI_TYPE_TEXT          (0)
+#define TDW_TDI_TYPE_SPRITE_DRAW   (1)
+#define TDW_TDI_TYPE_PREVIEW_MODEL (2)
+#define TDW_TDI_TYPE_BOX           (3)
+
+/* Masks for reading/writing the data in a cell */
+enum E_TDW_TDI_BITS (<<= 1) {
+	EI_TDW_TDI_BITS_SHADOW  = TDW_TDI_SHIFT_BITS(0xff, TDW_TDI_BOF_SHADOW),
+	EI_TDW_TDI_BITS_OUTLINE = TDW_TDI_SHIFT_BITS(0xff, TDW_TDI_BOF_OUTLINE),
+	EI_TDW_TDI_BITS_ALIGN   = TDW_TDI_SHIFT_BITS(0xf,  TDW_TDI_BOF_ALIGN),
+	EI_TDW_TDI_BITS_FONT    = TDW_TDI_SHIFT_BITS(0xf,  TDW_TDI_BOF_FONT),
+	EI_TDW_TDI_BITS_BOX     = TDW_TDI_SHIFT_BITS(0x1,  TDW_TDI_BOF_BOX),
+	EI_TDW_TDI_BITS_TYPE    = TDW_TDI_SHIFT_BITS(0x3,  TDW_TDI_BOF_TYPE)
+};
+
+/* Fields for each textdraws */
+enum E_TDW_TDI_DATA {
+	EI_TDW_TDI_DATA_ID,
+	Float:EI_TDW_TDI_DATA_POS_X,
+	Float:EI_TDW_TDI_DATA_POS_Y,
+	Float:EI_TDW_TDI_DATA_LETTER_X,
+	Float:EI_TDW_TDI_DATA_LETTER_Y,
+	Float:EI_TDW_TDI_DATA_TEXT_X,
+	Float:EI_TDW_TDI_DATA_TEXT_Y,
+	EI_TDW_TDI_DATA_COLOR,
+	EI_TDW_TDI_DATA_BG_COLOR,
+	EI_TDW_TDI_DATA_BOX_COLOR,
+	E_TDW_TDI_BITS:EI_TDW_TDI_DATA_BITS
+};
+
+/* SA:MP limits */
+#define TDW_TDI_MAX_TEXT_BUFFER_SIZE (1024)
+
+/*
+ * User constants
+ */
+
+#if !defined TDW_TDI_MAX_TEXTDRAWS
+	#define TDW_TDI_MAX_TEXTDRAWS (256)
+#else
+	#assert TDW_TDI_MAX_TEXTDRAWS <= MAX_TEXT_DRAWS
+#endif
+
+#if !defined TDW_TDI_MAX_PLAYER_TEXTDRAWS
+	#define TDW_TDI_MAX_PLAYER_TEXTDRAWS (16)
+#else
+	#assert TDW_TDI_MAX_PLAYER_TEXTDRAWS <= MAX_PLAYER_TEXT_DRAWS
+#endif
+
+/*
+ * Data
+ */
+
+static stock
+	TDW_gsData[TDW_TDI_MAX_TEXTDRAWS + (MAX_PLAYERS *
+		TDW_TDI_MAX_PLAYER_TEXTDRAWS)][E_TDW_TDI_DATA],
+	TDW_gsTextBuffer[TDW_TDI_MAX_TEXT_BUFFER_SIZE char];
+
 static stock const
-	TDW_gscPlaceholder[] = !"_";
+	TDW_gsPlaceholder[] = !"_";
 
-stock Textdraw:tiCreateText(Float:x, Float:y, const text[],
-	color = TDI_DEFAULT_COLOR, font = TDI_FONT_1, playerid = INVALID_PLAYER_ID,
-	Float:letter_width = TDI_DEFAULT_LETTER_WIDTH,
-	Float:letter_height = TDI_DEFAULT_LETTER_HEIGHT)
+/*
+ * Internal functions
+ */
+
+/* Returns a free slot in the array */
+static stock tdiGetFreeSlot(playerid = INVALID_PLAYER_ID)
 {
-	new Textdraw:handle;
-	// Create a new textdraw.
+	new
+		end_index,
+		start_index;
+
 	if (playerid == INVALID_PLAYER_ID) {
-		new Text:td = TextDrawCreate(x, y, text);
-		// Text settings.
-		TextDrawFont(td, TDI_FONT_CLAMP(font));
-		TextDrawColor(td, color);
-		TextDrawLetterSize(td, letter_width, letter_height);
-		// Set to zero the shadow size.
-		TextDrawSetShadow(td, 0);
-		// Store the textdrawid, playerid in the handle.
-		TDI_SET_TEXTDRAW_ID(handle, td);
-		TDI_SET_PLAYER_ID(handle, TDI_INVALID_PLAYER_ID);
+		end_index = TDW_TDI_MAX_TEXTDRAWS;
+		start_index = 0;
 	} else {
-		new PlayerText:td = CreatePlayerTextDraw(playerid, x, y, text);
-		// Text settings.
-		PlayerTextDrawFont(playerid, td, TDI_FONT_CLAMP(font));
-		PlayerTextDrawColor(playerid, td, color);
-		PlayerTextDrawLetterSize(playerid, td, letter_width, letter_height);
-		// Set to zero the shadow size.
-		PlayerTextDrawSetShadow(playerid, td, 0);
-		// Store the textdrawid, playerid in the handle.
-		TDI_SET_TEXTDRAW_ID(handle, td);
-		TDI_SET_PLAYER_ID(handle, playerid);
+		start_index = TDW_TDI_MAX_TEXTDRAWS + (playerid *
+			TDW_TDI_MAX_PLAYER_TEXTDRAWS);
+		end_index = start_index + TDW_TDI_MAX_PLAYER_TEXTDRAWS;
 	}
-	TDI_SET_TEXTDRAW_TYPE(handle, TDI_TYPE_TEXT);
-	return handle;
+
+	do {} while (--end_index >= start_index &&
+		TDW_gsData[end_index][EI_TDW_TDI_DATA_BITS]);
+
+	return end_index < start_index ? INVALID_TEXT_DRAW : end_index;
 }
 
-stock Textdraw:tiCreateSprite(Float:x, Float:y, const name[],
-	Float:width, Float:height, color = TDI_DEFAULT_COLOR,
+/**/
+static stock tdiTrimRight(string[])
+{
+	new
+		length = strlen(string),
+		pos = length;
+
+	if (TDW_TDI_IS_PACKED_STRING(string)) {
+		while (pos-- != 0 && string{pos} == ' ')
+		{}
+	} else {
+		while (pos-- != 0 && string[pos] == ' ')
+		{}
+	}
+
+	return strdel(string, pos + 1, length);
+}
+
+/*
+ * API functions
+ */
+
+/* Creates a new textdraw */
+stock Textdraw:tdiCreateText(Float:x, Float:y, const text[],
+	color = TDW_TDI_DEFAULT_COLOR, font = TDW_TDI_DEFAULT_FONT,
+	playerid = INVALID_PLAYER_ID,
+	Float:letter_width = TDW_TDI_DEFAULT_LWIDTH,
+	Float:letter_height = TDW_TDI_DEFAULT_LHEIGHT)
+{
+	// find the slot where we will store the textdraw's data.
+	new
+		slotid = tdiGetFreeSlot(playerid);
+	if (slotid == INVALID_TEXT_DRAW)
+		return Textdraw:INVALID_TEXT_DRAW;
+
+	// prepare the passed settings to set and store them.
+	font = TDW_TDI_TEXTFONT_CLAMP(font);
+
+	// copy the passed string into the buffer to use it later.
+	if (TDW_TDI_IS_PACKED_STRING(text)) {
+		TDW_gsTextBuffer{0} = EOS;
+		strcat(TDW_gsTextBuffer, text);
+	} else {
+		strpack(TDW_gsTextBuffer, text);
+	}
+
+	/* fix: If the last character in the text is a space (" "), the text will
+	 * all be blank.
+	 */
+	tdiTrimRight(TDW_gsTextBuffer);
+
+	// create a new textdraw.
+	if (playerid == INVALID_PLAYER_ID) {  // global textdraw.
+		new
+			Text:textid = TextDrawCreate(x, y,
+				TDW_gsTextBuffer);
+
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		TextDrawFont(textid, font);
+		TextDrawColor(textid, color);
+		TextDrawLetterSize(textid, letter_width, letter_height);
+
+		TextDrawSetShadow(textid, 0);
+
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
+	} else {  // player textdraw.
+
+		/* check the player's connection to the server, because
+		 * CreatePlayerTextDraw returns zero when the player isn't
+		 * connected (the function should return INVALID_TEXT_DRAW
+		 * instead of zero)
+		 */
+		if (IsPlayerConnected(playerid) == 0)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		new
+			PlayerText:textid = CreatePlayerTextDraw(playerid, x, y,
+				TDW_gsTextBuffer);
+
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		PlayerTextDrawFont(playerid, textid, font);
+		PlayerTextDrawColor(playerid, textid, color);
+		PlayerTextDrawLetterSize(playerid, textid, letter_width,
+			letter_height);
+
+		PlayerTextDrawSetShadow(playerid, textid, 0);
+
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
+	}
+
+	// store the passed settings in the array.
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_X] = x;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_Y] = y;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_COLOR] = color;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_LETTER_X] = letter_width;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_LETTER_Y] = letter_height;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_BITS] = E_TDW_TDI_BITS:(
+		((TDW_TDI_TYPE_TEXT << TDW_TDI_BOF_TYPE) & _:EI_TDW_TDI_BITS_TYPE) |
+		((_:font << TDW_TDI_BOF_FONT) & _:EI_TDW_TDI_BITS_FONT)
+	);
+
+	return Textdraw:slotid;
+}
+
+/* Destroys a textdraw */
+stock bool:tdiDestroy(Textdraw:slotid)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawDestroy(playerid, PlayerText:textid);
+	} else {
+		TextDrawDestroy(Text:textid);
+	}
+
+	// reset the data to free the slot.
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] = E_TDW_TDI_BITS:0;
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID] = INVALID_TEXT_DRAW;
+
+	return true;
+}
+
+/* Shows a textdraw */
+stock tdiShow(Textdraw:slotid, forplayerid = INVALID_PLAYER_ID)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawShow(playerid, PlayerText:textid);
+	} else {
+		if (forplayerid == INVALID_PLAYER_ID) {
+			TextDrawShowForAll(Text:textid);
+		} else {
+			TextDrawShowForPlayer(forplayerid, Text:textid);
+		}
+	}
+
+	return true;
+}
+
+/* Hides a textdraw */
+stock tdiHide(Textdraw:slotid, forplayerid = INVALID_PLAYER_ID)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawHide(playerid, PlayerText:textid);
+	} else {
+		if (forplayerid == INVALID_PLAYER_ID) {
+			TextDrawHideForAll(Text:textid);
+		} else {
+			TextDrawHideForPlayer(forplayerid, Text:textid);
+		}
+	}
+
+	return true;
+}
+
+/* Sets a new string */
+stock tdiSetString(Textdraw:slotid, const text[])
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	// copy the passed string into the buffer to use it later.
+	if (TDW_TDI_IS_PACKED_STRING(text)) {
+		TDW_gsTextBuffer[0] = EOS;
+		strcat(TDW_gsTextBuffer, text);
+	} else {
+		strpack(TDW_gsTextBuffer, text);
+	}
+
+	/* fix: If the last character in the text is a space (" "), the text will
+	 * all be blank.
+	 */
+	tdiTrimRight(TDW_gsTextBuffer);
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawSetString(playerid, PlayerText:textid, TDW_gsTextBuffer);
+	} else {
+		TextDrawSetString(Text:textid, TDW_gsTextBuffer);
+	}
+
+	return true;
+}
+
+/* Sets shadow for a textdraw */
+stock tdiSetShadow(Textdraw:slotid, size)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawSetShadow(playerid, PlayerText:textid, size);
+	} else {
+		TextDrawSetShadow(Text:textid, size);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &= ~EI_TDW_TDI_BITS_SHADOW;
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] |= E_TDW_TDI_BITS:(
+		size << TDW_TDI_BOF_SHADOW) & EI_TDW_TDI_BITS_SHADOW;
+
+	return true;
+}
+
+/* Sets outline for a textdraw */
+stock tdiSetOutline(Textdraw:slotid, size)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawSetOutline(playerid, PlayerText:textid, size);
+	} else {
+		TextDrawSetOutline(Text:textid, size);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &= ~EI_TDW_TDI_BITS_OUTLINE;
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] |= E_TDW_TDI_BITS:(
+		size << TDW_TDI_BOF_OUTLINE) & EI_TDW_TDI_BITS_OUTLINE;
+
+	return true;
+}
+
+/* Sets text size for a textdraw. */
+stock tdiSetTextSize(Textdraw:slotid, Float:x, Float:y)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawTextSize(playerid, PlayerText:textid, x, y);
+	} else {
+		TextDrawTextSize(Text:textid, x, y);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_TEXT_X] = x;
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_TEXT_Y] = y;
+
+	return true;
+}
+
+/* Sets letter size for a textdraw. */
+stock tdiSetLetterSize(Textdraw:slotid, Float:x, Float:y)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawLetterSize(playerid, PlayerText:textid, x, y);
+	} else {
+		TextDrawLetterSize(Text:textid, x, y);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_LETTER_X] = x;
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_LETTER_Y] = y;
+
+	return true;
+}
+
+/* Sets a font for a textdraw. */
+stock tdiSetFont(Textdraw:slotid, font)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	font = TDW_TDI_TEXTFONT_CLAMP(font);
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawFont(playerid, PlayerText:textid, font);
+	} else {
+		TextDrawFont(Text:textid, font);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &= ~EI_TDW_TDI_BITS_FONT;
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] |= E_TDW_TDI_BITS:(
+		font << TDW_TDI_BOF_FONT) & EI_TDW_TDI_BITS_FONT;
+
+	return true;
+}
+
+/* Sets a align for a textdraw */
+stock tdiSetAlign(Textdraw:slotid, align)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawAlignment(playerid, PlayerText:textid, align);
+	} else {
+		TextDrawAlignment(Text:textid, align);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &= ~EI_TDW_TDI_BITS_ALIGN;
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] |= E_TDW_TDI_BITS:(
+		align << TDW_TDI_BOF_ALIGN) & EI_TDW_TDI_BITS_ALIGN;
+
+	return true;
+}
+
+/* Sets a box color for a textdraw. */
+stock tdiSetBoxColor(Textdraw:slotid, boxcolor)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawBoxColor(playerid, PlayerText:textid, boxcolor);
+	} else {
+		TextDrawBoxColor(Text:textid, boxcolor);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BOX_COLOR] = boxcolor;
+
+	return true;
+}
+
+/* Sets a background color for a textdraw. */
+stock tdiSetBackgroundColor(Textdraw:slotid, bgcolor)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawBackgroundColor(playerid, PlayerText:textid, bgcolor);
+	} else {
+		TextDrawBackgroundColor(Text:textid, bgcolor);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BG_COLOR] = bgcolor;
+
+	return true;
+}
+
+/* Sets a color for a textdraw. */
+stock tdiSetColor(Textdraw:slotid, color)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	new
+		textid = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_ID];
+
+	if (TDW_TDI_IS_PLAYER_TEXTDRAW(slotid)) {
+		new
+			playerid = TDW_TDI_GET_PLAYER_ID(slotid);
+
+		PlayerTextDrawColor(playerid, PlayerText:textid, color);
+	} else {
+		TextDrawColor(Text:textid, color);
+	}
+
+	TDW_gsData[_:slotid][EI_TDW_TDI_DATA_COLOR] = color;
+
+	return true;
+}
+
+/* Creates a new textdraw model preview */
+stock Textdraw:tdiCreateModelPreview(Float:x, Float:y, modelindex,
+	Float:width, Float:height, color = TDW_TDI_DEFAULT_COLOR,
+	bgcolor = TDW_TDI_DEFAULT_BCOLOR, playerid = INVALID_PLAYER_ID)
+{
+	// find the slot where we will store the textdraw's data.
+	new
+		slotid = tdiGetFreeSlot(playerid);
+	if (slotid == INVALID_TEXT_DRAW)
+		return Textdraw:INVALID_TEXT_DRAW;
+
+	// create a new textdraw.
+	if (playerid == INVALID_PLAYER_ID) {  // global textdraw.
+		new
+			Text:textid = TextDrawCreate(x, y,
+				TDW_gsPlaceholder);
+
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		TextDrawFont(textid, TDW_TDI_FONT_PREVIEW_MODEL);
+		TextDrawColor(textid, color);
+		TextDrawTextSize(textid, width, height);
+
+		TextDrawUseBox(textid, 1);
+		TextDrawBackgroundColor(textid, bgcolor);
+
+		TextDrawSetPreviewModel(textid, modelindex);
+
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
+	} else {  // player textdraw.
+
+		/* check the player's connection to the server, because
+		 * CreatePlayerTextDraw returns zero when the player isn't
+		 * connected (the function should return INVALID_TEXT_DRAW
+		 * instead of zero)
+		 */
+		if (IsPlayerConnected(playerid) == 0)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		new
+			PlayerText:textid = CreatePlayerTextDraw(playerid, x, y,
+				TDW_gsPlaceholder);
+
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		PlayerTextDrawFont(playerid, textid, TDW_TDI_FONT_PREVIEW_MODEL);
+		PlayerTextDrawColor(playerid, textid, color);
+		PlayerTextDrawTextSize(playerid, textid, width, height);
+
+		PlayerTextDrawUseBox(playerid, textid, 1);
+		PlayerTextDrawBackgroundColor(playerid, textid, bgcolor);
+
+		PlayerTextDrawSetPreviewModel(playerid, textid, modelindex);
+
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
+	}
+
+	// store the passed settings in the array.
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_X] = x;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_Y] = y;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_TEXT_X] = width;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_TEXT_Y] = height;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_COLOR] = color;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_BG_COLOR] = bgcolor;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_BITS] = E_TDW_TDI_BITS:(
+		((TDW_TDI_TYPE_PREVIEW_MODEL << TDW_TDI_BOF_TYPE) &
+			_:EI_TDW_TDI_BITS_TYPE) |
+		((TDW_TDI_FONT_PREVIEW_MODEL << TDW_TDI_BOF_FONT) &
+			_:EI_TDW_TDI_BITS_FONT) |
+		((1 << TDW_TDI_BOF_BOX) & _:EI_TDW_TDI_BITS_BOX)
+	);
+
+	return Textdraw:slotid;
+}
+
+/* Creates a new textdraw with sprite */
+stock Textdraw:tdiCreateSprite(Float:x, Float:y, const sprite[],
+	Float:width, Float:height, color = TDW_TDI_DEFAULT_COLOR,
 	playerid = INVALID_PLAYER_ID)
 {
-	new Textdraw:handle;
-	// Create a new textdraw.
-	if (playerid == INVALID_PLAYER_ID) {
-		new Text:td = TextDrawCreate(x, y, name);
-		// Text settings.
-		TextDrawFont(td, TDI_FONT_SPRITE_DRAW);
-		TextDrawColor(td, color);
-		TextDrawTextSize(td, width, height);
-		// Store the textdrawid, playerid in the handle.
-		TDI_SET_TEXTDRAW_ID(handle, td);
-		TDI_SET_PLAYER_ID(handle, TDI_INVALID_PLAYER_ID);
-	} else {
-		new PlayerText:td = CreatePlayerTextDraw(playerid, x, y, name);
-		// Text settings.
-		PlayerTextDrawFont(playerid, td, TDI_FONT_SPRITE_DRAW);
-		PlayerTextDrawColor(playerid, td, color);
-		PlayerTextDrawTextSize(playerid, td, width, height);
-		// Store the textdrawid, playerid in the handle.
-		TDI_SET_TEXTDRAW_ID(handle, td);
-		TDI_SET_PLAYER_ID(handle, playerid);
-	}
-	TDI_SET_TEXTDRAW_TYPE(handle, TDI_TYPE_SPRITE_DRAW);
-	TDI_SET_TEXTDRAW_FLAGS(handle, TDI_TEXTDRAW_FLAG_USE_BOX);
-	return handle;
-}
-
-stock Textdraw:tiCreatePreviewModel(Float:x, Float:y, modelindex, Float:width,
-	Float:height, color = TDI_DEFAULT_COLOR, bgcolor = TDI_DEFAULT_BCOLOR,
-	playerid = INVALID_PLAYER_ID)
-{
-	new Textdraw:handle;
-	// Create a new textdraw.
-	if (playerid == INVALID_PLAYER_ID) {
-		new Text:td = TextDrawCreate(x, y, TDW_gscPlaceholder);
-		// Text settings.
-		TextDrawFont(td, TDI_FONT_MODEL_PREVIEW);
-		TextDrawColor(td, color);
-		TextDrawTextSize(td, width, height);
-		// Box settings.
-		TextDrawUseBox(td, 1);
-		TextDrawBackgroundColor(td, bgcolor);
-		// Preview model settings.
-		TextDrawSetPreviewModel(td, modelindex);
-		// Store the textdrawid, playerid in the handle.
-		TDI_SET_TEXTDRAW_ID(handle, td);
-		TDI_SET_PLAYER_ID(handle, TDI_INVALID_PLAYER_ID);
-	} else {
-		new PlayerText:td = CreatePlayerTextDraw(playerid, x, y,
-			TDW_gscPlaceholder);
-		// Text settings.
-		PlayerTextDrawFont(playerid, td, TDI_FONT_MODEL_PREVIEW);
-		PlayerTextDrawColor(playerid, td, color);
-		PlayerTextDrawTextSize(playerid, td, width, height);
-		// Box settings.
-		PlayerTextDrawUseBox(playerid, td, 1);
-		PlayerTextDrawBackgroundColor(playerid, td, bgcolor);
-		// Preview model settings.
-		PlayerTextDrawSetPreviewModel(playerid, td, modelindex);
-		// Store the textdrawid, playerid in the handle.
-		TDI_SET_TEXTDRAW_ID(handle, td);
-		TDI_SET_PLAYER_ID(handle, playerid);
-	}
-	TDI_SET_TEXTDRAW_TYPE(handle, TDI_TYPE_MODEL_PREVIEW);
-	TDI_SET_TEXTDRAW_FLAGS(handle, TDI_TEXTDRAW_FLAG_USE_BOX);
-	return handle;
-}
-
-stock tiShow(Textdraw:handle, forplayerid = INVALID_PLAYER_ID)
-{
+	// find the slot where we will store the textdraw's data.
 	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		textdrawid = TDI_GET_TEXTDRAW_ID(handle),
-		ret;
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		if (forplayerid == INVALID_PLAYER_ID) {
-			ret = TextDrawShowForAll(Text:textdrawid);
-		} else {
-			ret = TextDrawShowForPlayer(playerid, Text:textdrawid);
-		}
-	} else {
-		ret = PlayerTextDrawShow(playerid, PlayerText:textdrawid);
+		slotid = tdiGetFreeSlot(playerid);
+	if (slotid == INVALID_TEXT_DRAW)
+		return Textdraw:INVALID_TEXT_DRAW;
+
+	// create a new textdraw.
+	if (playerid == INVALID_PLAYER_ID) {  // global textdraw.
+		new
+			Text:textid = TextDrawCreate(x, y,
+				sprite);
+
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		TextDrawFont(textid, TDW_TDI_FONT_SPRITE_DRAW);
+		TextDrawColor(textid, color);
+		TextDrawTextSize(textid, width, height);
+
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
+	} else {  // player textdraw.
+
+		/* check the player's connection to the server, because
+		 * CreatePlayerTextDraw returns zero when the player isn't
+		 * connected (the function should return INVALID_TEXT_DRAW
+		 * instead of zero)
+		 */
+		if (IsPlayerConnected(playerid) == 0)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		new
+			PlayerText:textid = CreatePlayerTextDraw(playerid, x, y,
+				sprite);
+
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		PlayerTextDrawFont(playerid, textid, TDW_TDI_FONT_SPRITE_DRAW);
+		PlayerTextDrawColor(playerid, textid, color);
+		PlayerTextDrawTextSize(playerid, textid, width, height);
+
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
 	}
-	return ret;
+
+	// store the passed settings in the array.
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_X] = x;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_Y] = y;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_TEXT_X] = width;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_TEXT_Y] = height;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_COLOR] = color;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_BITS] = E_TDW_TDI_BITS:(
+		((TDW_TDI_TYPE_SPRITE_DRAW << TDW_TDI_BOF_TYPE) &
+			_:EI_TDW_TDI_BITS_TYPE) |
+		((TDW_TDI_FONT_SPRITE_DRAW << TDW_TDI_BOF_FONT) &
+			_:EI_TDW_TDI_BITS_FONT) |
+		((1 << TDW_TDI_BOF_BOX) & _:EI_TDW_TDI_BITS_BOX)
+	);
+
+	return Textdraw:slotid;
 }
 
-stock tiHide(Textdraw:handle, forplayerid = INVALID_PLAYER_ID)
+/* Creates a new textdraw with only box (Experimental) */
+stock Textdraw:tdiCreateBox(Float:x, Float:y, Float:width, Float:height,
+	bgcolor = TDW_TDI_DEFAULT_BCOLOR, playerid = INVALID_PLAYER_ID)
 {
+	// find the slot where we will store the textdraw's data.
 	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		textdrawid = TDI_GET_TEXTDRAW_ID(handle),
-		ret;
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		if (forplayerid == INVALID_PLAYER_ID) {
-			ret = TextDrawHideForAll(Text:textdrawid);
-		} else {
-			ret = TextDrawHideForPlayer(playerid, Text:textdrawid);
-		}
-	} else {
-		ret = PlayerTextDrawHide(playerid, PlayerText:textdrawid);
-	}
-	return ret;
-}
+		slotid = tdiGetFreeSlot(playerid);
+	if (slotid == INVALID_TEXT_DRAW)
+		return Textdraw:INVALID_TEXT_DRAW;
 
-stock tiDestroy(Textdraw:handle)
-{
-	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		textdrawid = TDI_GET_TEXTDRAW_ID(handle),
-		ret;
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		ret = TextDrawDestroy(Text:textdrawid);
-	} else {
-		ret = PlayerTextDrawDestroy(playerid, PlayerText:textdrawid);
-	}
-	return ret;
-}
+	// create a new textdraw.
+	if (playerid == INVALID_PLAYER_ID) {  // global textdraw.
+		new
+			Text:textid = TextDrawCreate(x, y,
+				TDW_gsPlaceholder);
 
-stock bool:tiChangeSelectable(Textdraw:handle, bool:value)
-{
-	if (TDI_GET_TEXTDRAW_FLAGS(handle) & TDI_TEXTDRAW_FLAG_USE_BOX == 0)
-		return false;
-	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		td = TDI_GET_TEXTDRAW_ID(handle);
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		TextDrawSetSelectable(Text:td, value);
-	} else {
-		PlayerTextDrawSetSelectable(playerid, PlayerText:td, value);
-	}
-	return true;
-}
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
 
-stock bool:tiChangePreviewRotations(Textdraw:handle, Float:x, Float:y, Float:z,
-	Float:zoom = 1.0)
-{
-	if (TDI_GET_TEXTDRAW_TYPE(handle) != TDI_TYPE_MODEL_PREVIEW)
-		return false;
-	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		td = TDI_GET_TEXTDRAW_ID(handle);
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		TextDrawSetPreviewRot(Text:td, x, y, z, zoom);
-	} else {
-		PlayerTextDrawSetPreviewRot(playerid, PlayerText:td, x, y, z, zoom);
-	}
-	return true;
-}
+		TextDrawLetterSize(textid, 0.0, height * 0.135);
+		TextDrawTextSize(textid, x + width, height);
 
-stock bool:tiChangePreviewModel(Textdraw:handle, modelindex)
-{
-	if (TDI_GET_TEXTDRAW_TYPE(handle) != TDI_TYPE_MODEL_PREVIEW)
-		return false;
-	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		td = TDI_GET_TEXTDRAW_ID(handle);
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		TextDrawSetPreviewModel(Text:td, modelindex);
-	} else {
-		PlayerTextDrawSetPreviewModel(playerid, PlayerText:td, modelindex);
-	}
-	return true;
-}
+		TextDrawUseBox(textid, 1);
+		TextDrawBackgroundColor(textid, bgcolor);
 
-stock tiChangeText(Textdraw:handle, const text[])
-{
-	if (TDI_GET_TEXTDRAW_TYPE(handle) != TDI_TYPE_TEXT)
-		return 0;
-	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		td = TDI_GET_TEXTDRAW_ID(handle),
-		ret;
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		ret = TextDrawSetString(Text:td, text);
-	} else {
-		ret = PlayerTextDrawSetString(playerid, PlayerText:td, text);
-	}
-	return ret;
-}
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
+	} else {  // player textdraw.
 
-stock tiChangeColor(Textdraw:handle, color)
-{
-	new
-		playerid = TDI_GET_PLAYER_ID(handle),
-		td = TDI_GET_TEXTDRAW_ID(handle),
-		ret;
-	if (playerid == TDI_INVALID_PLAYER_ID) {
-		ret = TextDrawColor(Text:td, color);
-	} else {
-		ret = PlayerTextDrawColor(playerid, PlayerText:td, color);
-	}
-	return ret;
-}
+		/* check the player's connection to the server, because
+		 * CreatePlayerTextDraw returns zero when the player isn't
+		 * connected (the function should return INVALID_TEXT_DRAW
+		 * instead of zero)
+		 */
+		if (IsPlayerConnected(playerid) == 0)
+			return Textdraw:INVALID_TEXT_DRAW;
 
-stock bool:tiIsEqualId(Textdraw:handle, {PlayerText, Text}:id, tag = tagof(id))
-{
-	static
-		playerid,
-		td;
-	playerid = TDI_GET_PLAYER_ID(handle);
-	td = TDI_GET_TEXTDRAW_ID(handle);
-	switch (tag) {
-		case (tagof(PlayerText:)): {
-			return (playerid == TDI_INVALID_PLAYER_ID)
-				? false
-				: (_:td == _:id);
-		}
-		case (tagof(Text:)): {
-			return (playerid != TDI_INVALID_PLAYER_ID)
-				? false
-				: (_:td == _:id);
-		}
+		new
+			PlayerText:textid = CreatePlayerTextDraw(playerid, x, y,
+				TDW_gsPlaceholder);
+
+		if (_:textid == INVALID_TEXT_DRAW)
+			return Textdraw:INVALID_TEXT_DRAW;
+
+		PlayerTextDrawLetterSize(playerid, textid, 0.0, height * 0.135);
+		PlayerTextDrawTextSize(playerid, textid, x + width, height);
+
+		PlayerTextDrawUseBox(playerid, textid, 1);
+		PlayerTextDrawBackgroundColor(playerid, textid, bgcolor);
+
+		TDW_gsData[slotid][EI_TDW_TDI_DATA_ID] = _:textid;
 	}
-	return false;
+
+	// store the passed settings in the array.
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_X] = x;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_POS_Y] = y;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_LETTER_X] = 0.0;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_LETTER_Y] = height;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_TEXT_X] = width;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_TEXT_Y] = height;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_BG_COLOR] = bgcolor;
+	TDW_gsData[slotid][EI_TDW_TDI_DATA_BITS] = E_TDW_TDI_BITS:(
+		((TDW_TDI_TYPE_BOX << TDW_TDI_BOF_TYPE) &
+			_:EI_TDW_TDI_BITS_TYPE) |
+		((1 << TDW_TDI_BOF_BOX) & _:EI_TDW_TDI_BITS_BOX)
+	);
+
+	return Textdraw:slotid;
 }

@@ -1,53 +1,43 @@
 #include <a_samp>
 #include <tdi/tdw_tdi>
 
-static
-	Textdraw:text,
-	Textdraw:sprite,
-	Textdraw:preview_model,
-	Textdraw:text_in_box;
+new Textdraw:td;
+new Textdraw:mp;
+new Textdraw:sp;
+new Textdraw:bx;
 
 public OnFilterScriptInit()
 {
-	text = tiCreateText(100.0, 10.0, !"This is text.");
-	sprite = tiCreateSprite(100.0, 60.0, !"LD_CHAT:thumbup", 50.0, 50.0);
-	preview_model = tiCreatePreviewModel(100.0, 110.0, 18646, 50.0, 50.0);
+	td = tdiCreateText(32.0, 10.0, !"This is text", .playerid = 0);
 
-	tiChangeSelectable(sprite, true);
-	tiChangeSelectable(preview_model, true);
-	tiChangeSelectable(text_in_box, true);
+	tdiShow(td);
 
-	tiChangePreviewRotations(preview_model, 10.0, 10.0, 10.0);
-	tiChangePreviewModel(preview_model, 1240);
+	tdiSetString(td, !"Tthis is string!");
+	tdiSetShadow(td, 2);
+	tdiSetOutline(td, 0);
+	tdiSetTextSize(td, 300.0, 50.0);
+	tdiSetLetterSize(td, 0.3, 1.0);
+	tdiSetFont(td, 2);
+	tdiSetAlign(td, TDW_TDI_ALIGN_RIGHT);
+	tdiSetBackgroundColor(td, TDW_TDI_RGBA(255, 20, 20, 230));
+	tdiSetBoxColor(td, TDW_TDI_RGBA(255, 20, 20, 230));
+	tdiSetColor(td, TDW_TDI_RGBA(20, 255, 20, 230));
+	tdiShow(td);
 
-	tiChangeText(text, !"This is updated text");
+	mp = tdiCreateModelPreview(200.0, 30.0, 500, 100.0, 100.0, .playerid = 0);
+	tdiShow(mp);
 
-	tiChangeColor(text,          TDI_RGBA( 10,  10,  60, 255));
-	tiChangeColor(sprite,        TDI_RGBA( 10,  10,  60, 255));
-	tiChangeColor(preview_model, TDI_RGBA( 10,  10,  60, 255));
+	sp = tdiCreateSprite(200.0, 150.0, !"LD_SPAC:WHITE", 100.0, 100.0, .playerid = 0);
+	tdiShow(sp);
 
-	tiShow(text);
-	tiShow(sprite);
-	tiShow(preview_model);
-	tiShow(text_in_box);
-
-	SelectTextDraw(0, TDI_RGBA(90, 90, 00, 255));
-	return 1;
+	bx = tdiCreateBox(200.0, 260.0, 10.0, 10.0, .playerid = 0);
+	tdiShow(bx);
 }
 
 public OnFilterScriptExit()
 {
-	tiDestroy(text);
-	tiDestroy(sprite);
-	tiDestroy(preview_model);
-	tiDestroy(text_in_box);
-	return 1;
-}
-
-public OnPlayerClickTextDraw(playerid, Text:clickedid)
-{
-	if (tiIsEqualId(sprite, clickedid)) {
-		printf("Clicked!");
-	}
-	return 1;
+	tdiDestroy(td);
+	tdiDestroy(mp);
+	tdiDestroy(sp);
+	tdiDestroy(bx);
 }
