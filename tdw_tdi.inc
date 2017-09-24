@@ -887,3 +887,125 @@ stock Textdraw:tdiCreateBox(Float:x, Float:y, Float:width, Float:height,
 
 	return Textdraw:slotid;
 }
+
+/*
+ * Data API functions
+ */
+
+stock bool:tdiGetPos(Textdraw:slotid, &Float:x, &Float:y)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	x = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_POS_X];
+	y = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_POS_Y];
+
+	return true;
+}
+
+stock bool:tdiGetLetterSize(Textdraw:slotid, &Float:x, &Float:y)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	x = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_LETTER_X];
+	y = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_LETTER_Y];
+
+	return true;
+}
+
+stock bool:tdiGetTextSize(Textdraw:slotid, &Float:x, &Float:y)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	x = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_TEXT_X];
+	y = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_TEXT_Y];
+
+	return true;
+}
+
+stock bool:tdiGetColor(Textdraw:slotid, &color)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	color = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_COLOR];
+
+	return true;
+}
+
+stock bool:tdiGetBoxColor(Textdraw:slotid, &boxcolor)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	boxcolor = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BOX_COLOR];
+
+	return true;
+}
+
+stock bool:tdiGetBackgroundColor(Textdraw:slotid, &bgcolor)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	bgcolor = TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BG_COLOR];
+
+	return true;
+}
+
+stock bool:tdiGetShadowSize(Textdraw:slotid, &size)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	size = (TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &
+		EI_TDW_TDI_BITS_SHADOW) >>> TDW_TDI_BOF_SHADOW;
+
+	return true;
+}
+
+stock bool:tdiGetOutlineSize(Textdraw:slotid, &size)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	size = (TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &
+		EI_TDW_TDI_BITS_OUTLINE) >>> TDW_TDI_BOF_OUTLINE;
+
+	return true;
+}
+
+stock bool:tdiGetAlign(Textdraw:slotid, &align)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	align = (TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &
+		EI_TDW_TDI_BITS_ALIGN) >>> TDW_TDI_BOF_ALIGN;
+
+	return true;
+}
+
+stock bool:tdiGetFont(Textdraw:slotid, &font)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	font = (TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &
+		EI_TDW_TDI_BITS_FONT) >>> TDW_TDI_BOF_FONT;
+
+	return true;
+}
+
+stock bool:tdiGetBox(Textdraw:slotid, &use)
+{
+	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
+		return false;
+
+	use = (TDW_gsData[_:slotid][EI_TDW_TDI_DATA_BITS] &
+		EI_TDW_TDI_BITS_BOX) >>> TDW_TDI_BOF_BOX;
+
+	return true;
+}
