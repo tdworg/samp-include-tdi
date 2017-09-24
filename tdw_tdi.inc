@@ -888,10 +888,6 @@ stock Textdraw:tdiCreateBox(Float:x, Float:y, Float:width, Float:height,
 	return Textdraw:slotid;
 }
 
-/*
- * Data API functions
- */
-
 stock bool:tdiGetPos(Textdraw:slotid, &Float:x, &Float:y)
 {
 	if (_:TDW_TDI_IS_USED_TEXTDRAW(slotid) == 0)
